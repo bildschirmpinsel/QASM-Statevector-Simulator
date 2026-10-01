@@ -1,20 +1,17 @@
 #ifndef SIMULATOR
 #define SIMULATOR
 
-#include "types.hpp"
 #include "qasm_parser.hpp"
+#include "types.hpp"
+#include <algorithm>
 #include <array>
 #include <cmath>
-#include <random>
-#include <algorithm>
-#include <iterator>
 #include <iostream>
+#include <iterator>
+#include <random>
 #include <stdexcept>
 #include <unordered_map>
 #include <vector>
-#include <bitset>
-
-static int number_qubits = 0;
 
 constexpr Complex ZERO{0.0, 0.0};
 constexpr Complex ONE{1.0, 0.0};
@@ -72,13 +69,17 @@ static const Matrix getUnitary(GateID id, double rotation_degree) {
   }
 }
 
-void applyGate(const Matrix unitary, int target_qubit,
+void applyGate(const Matrix unitary, int target_qubit, const int number_qubits,
                std::vector<Complex> &statevector);
 
-void applyControlledGate(const Matrix unitary, int control_qubit, int target_qubit, std::vector<Complex> &statevector);
+void applyControlledGate(const Matrix unitary, int control_qubit,
+                         int target_qubit, const int number_qubits,
+                         std::vector<Complex> &statevector);
 
-void simulate(std::vector<QASMGate> gates, std::vector<Complex>& statevector);
+void simulate(std::vector<QASMGate> gates, std::vector<Complex> &statevector,
+              const int number_qubits);
 
-void measure(std::vector<Complex> &statevector, int target_qubit);
+void measure(std::vector<Complex> &statevector, int target_qubit,
+             const int number_qubits);
 
 #endif

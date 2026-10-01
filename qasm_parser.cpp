@@ -2,11 +2,11 @@
 #include "types.hpp"
 #include <stdexcept>
 
-std::vector<QASMGate> parseQASM(const char *file,
+ int parseQASM(const char *file,
                                 std::vector<Complex> &statevector,
-                                int &number_qubits) {
-  std::vector<QASMGate> parsed_gates;
+                                std::vector<QASMGate> &gates) {
   std::unordered_map<std::string, int> registerToVector;
+  int number_qubits = 0;
 
 #ifndef NDEBUG
   std::cout << "Parsing file at path " << file << std::endl;
@@ -41,7 +41,7 @@ std::vector<QASMGate> parseQASM(const char *file,
       std::string operand_string;
       stream >> operand_string;
 
-      parsed_gates.push_back(
+      gates.push_back(
           parseGate(command, operand_string, registerToVector));
     }
   }
@@ -52,7 +52,7 @@ std::vector<QASMGate> parseQASM(const char *file,
 #endif
 
   statevector.resize(1u << number_qubits);
-  return parsed_gates;
+  return number_qubits;
 }
 
 std::string parseRegisterDefinition(std::string definition, int &size) {

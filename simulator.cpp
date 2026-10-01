@@ -1,12 +1,12 @@
 #include "simulator.hpp"
-#include <algorithm>
+#include "types.hpp"
 
 int main() {
   std::vector<Complex> statevector;
   // TODO add parameter for input file path
-  const char *qasm_path =
-      "grover_n3_orig.qasm";
-  auto gates = parseQASM(qasm_path, statevector, number_qubits);
+  const char *qasm_path = "grover_n5_orig.qasm";
+  std::vector<QASMGate> gates;
+  const int number_qubits = parseQASM(qasm_path, statevector, gates);
 
   statevector[0] = ONE;
 #ifndef NDEBUG
@@ -17,29 +17,33 @@ int main() {
   std::cout << ">" << std::endl;
 #endif
 
-  simulate(gates, statevector);
+  simulate(gates, statevector, number_qubits);
 
   std::cout << "Final statevector:" << std::endl;
-  for(auto x : statevector) {
+  for (auto x : statevector) {
     std::cout << "\t" << x << std::endl;
   }
 
   for (int qubit = 0; qubit < number_qubits; qubit++) {
-    measure(statevector, qubit);
+    measure(statevector, qubit, number_qubits);
   }
   auto measured_qubit_index_iterator =
       std::find_if(statevector.begin(), statevector.end(),
                    [](const Complex x) { return x.real() > 0.99; });
   int measured_qubit_index =
       std::distance(statevector.begin(), measured_qubit_index_iterator);
-  auto measured_qubit_string = std::bitset<3>(measured_qubit_index).to_string();
+  std::string measured_qubit_string;
+  for (int i = number_qubits - 1; i >= 0; --i) {
+    measured_qubit_string += ((measured_qubit_index >> i) & 1) ? '1' : '0';
+  }
   std::cout << "Measured statevector: |" << measured_qubit_string << ">"
             << std::endl;
 
   return 0;
 }
 
-void simulate(std::vector<QASMGate> gates, std::vector<Complex> &statevector) {
+void simulate(std::vector<QASMGate> gates, std::vector<Complex> &statevector,
+              const int number_qubits) {
   unsigned int processed_gates = 0;
   for (auto gate : gates) {
     auto gate_id = gate.gate;
@@ -48,14 +52,14 @@ void simulate(std::vector<QASMGate> gates, std::vector<Complex> &statevector) {
       if (gate_id == GateID::CX || gate_id == GateID::CZ) {
         if (gate_id == GateID::CX) {
           // CX
-          applyControlledGate(getUnitary(GateID::X, 0.0),
-                              gate.qubit_1_global_index,
-                              gate.qubit_2_global_index, statevector);
+          applyControlledGate(
+              getUnitary(GateID::X, 0.0), gate.qubit_1_global_index,
+              gate.qubit_2_global_index, number_qubits, statevector);
         } else {
           // CZ
-          applyControlledGate(getUnitary(GateID::Z, 0.0),
-                              gate.qubit_1_global_index,
-                              gate.qubit_2_global_index, statevector);
+          applyControlledGate(
+              getUnitary(GateID::Z, 0.0), gate.qubit_1_global_index,
+              gate.qubit_2_global_index, number_qubits, statevector);
         }
       } else if (gate_id == GateID::CCX) {
         std::vector<QASMGate> ccx_decomposition;
@@ -110,21 +114,21 @@ void simulate(std::vector<QASMGate> gates, std::vector<Complex> &statevector) {
         ccx_decomposition.emplace_back(QASMGate{0.0, gate.qubit_1_global_index,
                                                 gate.qubit_2_global_index, 0,
                                                 GateID::CX});
-        simulate(ccx_decomposition, statevector);
+        simulate(ccx_decomposition, statevector, number_qubits);
       }
     } else {
       // single unitary
       auto unitary = getUnitary(gate_id, gate.rotation_degree);
-      applyGate(unitary, gate.qubit_1_global_index, statevector);
+      applyGate(unitary, gate.qubit_1_global_index, number_qubits, statevector);
     }
     processed_gates++;
-    // std::cout << processed_gates << std::endl;
   }
 }
 
-void measure(std::vector<Complex> &statevector, int target_qubit) {
+void measure(std::vector<Complex> &statevector, int target_qubit,
+             const int number_qubits) {
   std::vector<Complex> statevector_copy(statevector);
-  applyGate(UNITARY_INACTIVE, target_qubit, statevector_copy);
+  applyGate(UNITARY_INACTIVE, target_qubit, number_qubits, statevector_copy);
 
   double p_0 = 0.0;
   for (const auto &z : statevector_copy) {
@@ -139,20 +143,20 @@ void measure(std::vector<Complex> &statevector, int target_qubit) {
 
   if (coin) {
     // coin is 1
-    applyGate(UNITARY_ACTIVE, target_qubit, statevector);
+    applyGate(UNITARY_ACTIVE, target_qubit, number_qubits, statevector);
     const Complex scalar{1 / std::sqrt(p_1), 0};
     for (int i = 0; i < statevector.size(); i++)
       statevector[i] *= scalar;
   } else {
     // coin is 0
-    applyGate(UNITARY_INACTIVE, target_qubit, statevector);
+    applyGate(UNITARY_INACTIVE, target_qubit, number_qubits, statevector);
     const Complex scalar{1 / std::sqrt(p_0), 0};
     for (int i = 0; i < statevector.size(); i++)
       statevector[i] *= scalar;
   }
 }
 
-void applyGate(const Matrix unitary, int target_qubit,
+void applyGate(const Matrix unitary, int target_qubit, const int number_qubits,
                std::vector<Complex> &statevector) {
 
   const unsigned int target_index = 1u << (target_qubit);
@@ -176,7 +180,8 @@ void applyGate(const Matrix unitary, int target_qubit,
 }
 
 void applyControlledGate(const Matrix unitary, int control_qubit,
-                         int target_qubit, std::vector<Complex> &statevector) {
+                         int target_qubit, const int number_qubits,
+                         std::vector<Complex> &statevector) {
   const unsigned int control_mask = 1u << (number_qubits - 1 - control_qubit);
   const unsigned int target_mask = 1u << (number_qubits - 1 - target_qubit);
 

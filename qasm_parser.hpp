@@ -14,8 +14,8 @@ static const std::unordered_map<std::string, GateID> gateMap{
     {"rx", GateID::RX}, {"ry", GateID::RY}, {"rz", GateID::RZ},
     {"cx", GateID::CX}, {"cz", GateID::CZ}, {"ccx", GateID::CCX}};
 
-std::vector<QASMGate>
-parseQASM(const char *file, std::vector<Complex> &statevector, int &number_qubits);
+
+int parseQASM(const char *file, std::vector<Complex> &statevector, std::vector<QASMGate> &gates);
 
 std::string parseRegisterDefinition(std::string definition, int &size);
 
