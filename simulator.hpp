@@ -10,7 +10,6 @@
 #include <iterator>
 #include <random>
 #include <stdexcept>
-#include <unordered_map>
 #include <vector>
 
 constexpr Complex ZERO{0.0, 0.0};
