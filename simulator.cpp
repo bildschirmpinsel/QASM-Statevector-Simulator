@@ -1,12 +1,14 @@
 #include "simulator.hpp"
 #include "types.hpp"
 
-int main() {
+int main(int argc, char *argv[]) {
+  if (argc < 2) {
+    std::cerr << "Usage: " << argv[0] << " <file_path>" << std::endl;
+    return 1;
+  }
   std::vector<Complex> statevector;
-  // TODO add parameter for input file path
-  const char *qasm_path = "grover_n5_orig.qasm";
   std::vector<QASMGate> gates;
-  const int number_qubits = parseQASM(qasm_path, statevector, gates);
+  const int number_qubits = parseQASM(argv[1], statevector, gates);
 
   statevector[0] = ONE;
 #ifndef NDEBUG
