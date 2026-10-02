@@ -9,28 +9,28 @@ This project does not aim at implementing an especially optimized quantum statev
 
 To optimize the simple matrix vector multiplication, we first have a look at the effect an arbitrary unitary 
 
-$$
+```math
 U=\begin{pmatrix}
    \alpha{}_{00} & \alpha{}_{01}\\
    \alpha{}_{10} & \alpha{}_{11} 
 \end{pmatrix}
-$$
+```
 
 has on a given target qubit $i$ of an $n$-qubit vector:
 
-$$
+```math
 {I}^{\otimes{}2^{i-1}} \otimes{}  U \otimes{} {I}^{\otimes{}2^{n-i}}.
-$$
+```
 
 We note that ${I_k} \otimes{} {I_l} = {I_{k\cdot{}l}}$ and with that:
 
-$$
+```math
 {I_{2^{i-1}}} \otimes{}  U \otimes{} {I_{2^{n-i}}}.
-$$
+```
 
 We can then simplify to:
 
-$$
+```math
 {I_{2^{i-1}}} \otimes{}  \begin{pmatrix}
     \alpha{}_{00} \cdot{} {I_{2^{n-i}}} & \alpha{}_{01} \cdot{} {I_{2^{n-i}}} \\
     \alpha{}_{10} \cdot{} {I_{2^{n-i}}} & \alpha{}_{11} \cdot{} {I_{2^{n-i}}}
@@ -40,16 +40,16 @@ $$
     \text{diag}(\alpha{}_{00})^{2^{n-i}} & \text{diag}(\alpha{}_{01})^{2^{n-i}}  \\
     \text{diag}(\alpha{}_{10})^{2^{n-i}} & \text{diag}(\alpha{}_{11})^{2^{n-i}}
 \end{pmatrix}.
-$$ 
+```
 
 Further put into block diagonal form:
 
-$$
+```math
     \text{Diag}(\begin{pmatrix}
     \text{diag}(\alpha{}_{00})^{2^{n-i}} & \text{diag}(\alpha{}_{01})^{2^{n-i}}  \\
     \text{diag}(\alpha{}_{10})^{2^{n-i}} & \text{diag}(\alpha{}_{11})^{2^{n-i}}
 \end{pmatrix})^{2^{i-1}}.
-$$
+```
 
 Calculations with this block diagonal matrix can then be simplified in as in the following:
 
@@ -63,17 +63,17 @@ $ to each block, which leads to:
 - Apply diag($\alpha{}_{00}$) and diag($\alpha{}_{10}$) to upper half of block and apply diag($\alpha{}_{01}$) and  diag($\alpha{}_{11}$) to lower half. 
 - Sum appropriate applications together and write to state vector. This can be done in-place as the blocks are all non-overlapping.
 
-# Two Qubit Gates
+## Two Qubit Gates
 
 With out loss of generality, a given $CX$ or $CZ$ gate can be calculated as $I \otimes{} \ket{0}\bra{0} +  U \otimes{} \ket{1} \bra{1}$, where $U$ is either a Pauli $X$ or $Z$ gate. For arbitrary distances between qubits we can write:
 
-$$
+```math
 I_{2^i} \otimes{} \ket{0} \bra{0} \otimes{} I_{2^j} \otimes{} I \otimes{} I_{2^k} + I_{2^i} \otimes{} \ket{1} \bra{1} \otimes{} I_{2^j} \otimes{} U \otimes{} I_{2^k},
-$$
+```
 
 where $i$ is the number of qubits more significant than the control qubit, $j$ the number of qubits inbetween control and target, $k$ is the number of qubits less significant than the target qubit. As an example, take a CX on $\ket{001}$, where the control qubit is the most significant and the target the least significant qubit. The formula from above then takes the explicit form of 
 
-$$
+```math
 (\ket{0}\bra{0}\otimes{}I_{2^1}\otimes{}I + \ket{1}\bra{1} \otimes{} I \otimes{} X) \ket{001} =
 \begin{pmatrix}
 1 & 0 & 0 & 0 & 0 & 0 & 0 & 0\\
@@ -107,11 +107,13 @@ $$
 0\\
 \end{pmatrix}
  = \ket{101}.
-$$
+```
 
 By definition, the constructed matrix will always be a block-diagonal sparse matrix when $U$ is either $X$ or $Z$, since all $I$, $X$, and $Z$ are diagonal matrices and the Kronecker product preserves this structure. The projectors $\ket{0}\bra{0}$ and $\ket{1}\bra{1}$ both preserve a single block diagonal element, $\ket{0}\bra{0}$ the upper left and $\ket{1}\bra{1}$ the bottom right. Added together, they form a complete block diagonal matrix, since 
 
-$$\ket{0}\bra{0} + \ket{1}\bra{1} = I.$$
+```math
+\ket{0}\bra{0} + \ket{1}\bra{1} = I.
+```
 
 We can now exploit this structure by looking at what parts of the vector are actually changed during the computation. 
 
