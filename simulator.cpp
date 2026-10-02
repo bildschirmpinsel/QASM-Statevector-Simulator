@@ -129,14 +129,15 @@ void simulate(std::vector<QASMGate> gates, std::vector<Complex> &statevector,
 
 void measure(std::vector<Complex> &statevector, int target_qubit,
              const int number_qubits) {
-
-  // TODO optimize
-  std::vector<Complex> statevector_copy(statevector);
-  applyGate(UNITARY_INACTIVE, target_qubit, number_qubits, statevector_copy);
-
   double p_0 = 0.0;
-  for (const auto &z : statevector_copy) {
-    p_0 += std::norm(z);
+
+  // apply |0><0| to all values in state vector that have
+  // the target bit inactive
+  const unsigned int target_mask = 1u << (number_qubits - 1 - target_qubit);
+  for (unsigned int i = 0; i < statevector.size(); i++) {
+    if ((i & target_mask) == 0) {
+      p_0 += std::norm(statevector[i]);
+    }
   }
   const double p_1 = 1.0 - p_0;
 
@@ -149,12 +150,14 @@ void measure(std::vector<Complex> &statevector, int target_qubit,
     // coin is 1
     applyGate(UNITARY_ACTIVE, target_qubit, number_qubits, statevector);
     const Complex scalar{1 / std::sqrt(p_1), 0};
+#pragma OMP PARALLEL FOR
     for (int i = 0; i < statevector.size(); i++)
       statevector[i] *= scalar;
   } else {
     // coin is 0
     applyGate(UNITARY_INACTIVE, target_qubit, number_qubits, statevector);
     const Complex scalar{1 / std::sqrt(p_0), 0};
+#pragma OMP PARALLEL FOR
     for (int i = 0; i < statevector.size(); i++)
       statevector[i] *= scalar;
   }
@@ -205,8 +208,10 @@ void applyControlledGate(const Matrix unitary, int control_qubit,
     const Complex inactive = statevector[target_inactive_index];
     const Complex active = statevector[target_active_index];
 
-    statevector[target_inactive_index] = unitary[0] * inactive + unitary[1] * active;
+    statevector[target_inactive_index] =
+        unitary[0] * inactive + unitary[1] * active;
 
-    statevector[target_active_index] = unitary[2] * inactive + unitary[3] * active;
+    statevector[target_active_index] =
+        unitary[2] * inactive + unitary[3] * active;
   }
 }
