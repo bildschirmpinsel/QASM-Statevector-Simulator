@@ -129,6 +129,8 @@ void simulate(std::vector<QASMGate> gates, std::vector<Complex> &statevector,
 
 void measure(std::vector<Complex> &statevector, int target_qubit,
              const int number_qubits) {
+
+  // TODO optimize
   std::vector<Complex> statevector_copy(statevector);
   applyGate(UNITARY_INACTIVE, target_qubit, number_qubits, statevector_copy);
 
@@ -197,14 +199,14 @@ void applyControlledGate(const Matrix unitary, int control_qubit,
       continue;
     }
 
-    const std::size_t target_zero_index = i;
-    const std::size_t target_one_index = i | target_mask;
+    const unsigned int target_inactive_index = i;
+    const unsigned int target_active_index = i | target_mask;
 
-    const Complex upper = statevector[target_zero_index];
-    const Complex lower = statevector[target_one_index];
+    const Complex inactive = statevector[target_inactive_index];
+    const Complex active = statevector[target_active_index];
 
-    statevector[target_zero_index] = unitary[0] * upper + unitary[1] * lower;
+    statevector[target_inactive_index] = unitary[0] * inactive + unitary[1] * active;
 
-    statevector[target_one_index] = unitary[2] * upper + unitary[3] * lower;
+    statevector[target_active_index] = unitary[2] * inactive + unitary[3] * active;
   }
 }
