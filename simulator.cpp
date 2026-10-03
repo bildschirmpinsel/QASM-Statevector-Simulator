@@ -3,7 +3,8 @@
 
 int main(int argc, char *argv[]) {
   if (argc < 3) {
-    std::cerr << "Usage: " << argv[0] << " <qasm_file_path> <output_file_path>" << std::endl;
+    std::cerr << "Usage: " << argv[0] << " <qasm_file_path> <output_file_path>"
+              << std::endl;
     return 1;
   }
 
@@ -22,10 +23,17 @@ int main(int argc, char *argv[]) {
 
   simulate(gates, statevector, number_qubits);
 
-  // TODO pipe to output file
-  std::cout << "Final statevector:" << std::endl;
+  const char *output_file_path = argv[2];
+#ifndef NDEBUG
+  std::cout << std::endl
+            << "Putting result in file at path " << output_file_path
+            << std::endl;
+#endif
+
+  std::ofstream output_file(output_file_path, std::ios::app);
+  output_file << "Final statevector:" << std::endl;
   for (auto x : statevector) {
-    std::cout << "\t" << x << std::endl;
+    output_file << "\t" << x << std::endl;
   }
 
   for (int qubit = 0; qubit < number_qubits; qubit++) {
