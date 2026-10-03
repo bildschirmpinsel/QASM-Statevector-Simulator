@@ -7,6 +7,7 @@
 #include <array>
 #include <cmath>
 #include <iostream>
+#include <fstream>
 #include <iterator>
 #include <random>
 #include <stdexcept>
@@ -21,6 +22,9 @@ const Complex INV_SQRT_2{1.0 / sqrt((2.0)), 0};
 using Matrix = std::array<Complex, 4>;
 const Matrix UNITARY_ACTIVE = {ZERO, ZERO, ZERO, ONE};
 const Matrix UNITARY_INACTIVE = {ONE, ZERO, ZERO, ZERO};
+
+static unsigned int processed_gates = 0;
+static unsigned int number_of_total_gates = 0;
 
 static const Matrix getUnitary(GateID id, double rotation_degree) {
   switch (id) {

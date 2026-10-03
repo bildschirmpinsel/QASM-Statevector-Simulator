@@ -2,10 +2,11 @@
 #include "types.hpp"
 
 int main(int argc, char *argv[]) {
-  if (argc < 2) {
-    std::cerr << "Usage: " << argv[0] << " <file_path>" << std::endl;
+  if (argc < 3) {
+    std::cerr << "Usage: " << argv[0] << " <qasm_file_path> <output_file_path>" << std::endl;
     return 1;
   }
+
   std::vector<Complex> statevector;
   std::vector<QASMGate> gates;
   const int number_qubits = parseQASM(argv[1], statevector, gates);
@@ -21,6 +22,7 @@ int main(int argc, char *argv[]) {
 
   simulate(gates, statevector, number_qubits);
 
+  // TODO pipe to output file
   std::cout << "Final statevector:" << std::endl;
   for (auto x : statevector) {
     std::cout << "\t" << x << std::endl;
@@ -29,24 +31,29 @@ int main(int argc, char *argv[]) {
   for (int qubit = 0; qubit < number_qubits; qubit++) {
     measure(statevector, qubit, number_qubits);
   }
+
+  // print collapsed statevector
   auto measured_qubit_index_iterator =
-      std::find_if(statevector.begin(), statevector.end(),
-                   [](const Complex x) { return x.real() > 0.99; });
+      std::max_element(statevector.begin(), statevector.end(),
+                       [](const Complex &a, const Complex &b) {
+                         return std::norm(a) < std::norm(b);
+                       });
   int measured_qubit_index =
       std::distance(statevector.begin(), measured_qubit_index_iterator);
   std::string measured_qubit_string;
-  for (int i = number_qubits - 1; i >= 0; --i) {
+  for (int i = 0; i < number_qubits; i++) {
     measured_qubit_string += ((measured_qubit_index >> i) & 1) ? '1' : '0';
   }
-  std::cout << "Measured statevector: |" << measured_qubit_string << ">"
-            << std::endl;
+  std::cout << std::endl
+            << "Measured statevector (LSB first): |" << measured_qubit_string
+            << ">" << std::endl;
 
   return 0;
 }
 
 void simulate(std::vector<QASMGate> gates, std::vector<Complex> &statevector,
               const int number_qubits) {
-  unsigned int processed_gates = 0;
+  number_of_total_gates += gates.size();
   for (auto gate : gates) {
     auto gate_id = gate.gate;
     if (gate_id == GateID::CZ || gate_id == GateID::CX ||
@@ -123,7 +130,23 @@ void simulate(std::vector<QASMGate> gates, std::vector<Complex> &statevector,
       auto unitary = getUnitary(gate_id, gate.rotation_degree);
       applyGate(unitary, gate.qubit_1_global_index, number_qubits, statevector);
     }
+
     processed_gates++;
+
+    // print progress bar
+    constexpr unsigned int width = 50;
+
+    const auto current = std::clamp(processed_gates, 0u, number_of_total_gates);
+    const int completed =
+        std::clamp((current * width) / number_of_total_gates, 0u, width);
+
+    const int remaining = width - completed;
+
+    std::cout << '\r' << '['
+              << std::string(static_cast<std::size_t>(completed), '=')
+              << std::string(static_cast<std::size_t>(remaining), ' ') << "] "
+              << (current * 100 / number_of_total_gates) << "% (" << current
+              << '/' << number_of_total_gates << ')' << std::flush;
   }
 }
 
