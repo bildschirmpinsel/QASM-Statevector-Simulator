@@ -54,12 +54,16 @@ Further put into block diagonal form:
 Calculations with this block diagonal matrix can then be simplified in as in the following:
 
 1. Divide state vector into $2^{i-1}$ non-overlapping blocks of size $2^{n-i+1}$. 
-2. Apply $
+2. Apply to each block the following matrix, leading to two new observations
+
+```math
     \begin{pmatrix}
     \text{diag}(\alpha{}_{00})^{2^{n-i}} & \text{diag}(\alpha{}_{01})^{2^{n-i}}  \\
     \text{diag}(\alpha{}_{10})^{2^{n-i}} & \text{diag}(\alpha{}_{11})^{2^{n-i}}
-\end{pmatrix}
-$ to each block, which leads to:
+\end{pmatrix}.
+``` 
+
+
 - Apply diag($\alpha{}_{00}$) and diag($\alpha{}_{10}$) to upper half of block and apply diag($\alpha{}_{01}$) and  diag($\alpha{}_{11}$) to lower half. 
 - Sum appropriate applications together and write to state vector. This can be done in-place as the blocks are all non-overlapping.
 
@@ -150,8 +154,8 @@ This results in the following algorithm:
 
 ```python
 applyControlledGate(target, control, a_00, a_01, a_10, a_11, statevector)
-    control_mask = 1u << (n - 1 - control);
-    target_mask = 1u << (n - 1 - target);
+    control_mask = 1u << (number_qubits - 1 - control)
+    target_mask = 1u << (number_qubits - 1 - target)
     for (i = 0; i < size(statevector); i++)
         if ((i & control_mask) == 0)
             continue
