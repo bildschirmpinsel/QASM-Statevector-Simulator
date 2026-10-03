@@ -64,7 +64,7 @@ Calculations with this block diagonal matrix can then be simplified in as in the
 ``` 
 
 
-- Apply diag($ \alpha{}_{00} $) and diag($ \alpha{}_{10} $) to upper half of block and apply diag($\alpha{}_{01}$) and  diag($\alpha{}_{11}$) to lower half. 
+- Apply $ \text{diag}(\alpha{}_{00}) $ and diag($ \alpha{}_{10} $) to upper half of block and apply diag($\alpha{}_{01}$) and  diag($\alpha{}_{11}$) to lower half. 
 - Sum appropriate applications together and write to state vector. This can be done in-place as the blocks are all non-overlapping.
 
 ## Measurement
