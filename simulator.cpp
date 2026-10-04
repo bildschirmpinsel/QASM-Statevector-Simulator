@@ -21,7 +21,11 @@ int main(int argc, char *argv[]) {
   std::cout << ">" << std::endl;
 #endif
 
-  simulate(gates, statevector, number_qubits);
+  unsigned int number_number_processed_gates = 0;
+  unsigned int number_total_gates = 0;
+
+  simulate(gates, statevector, number_qubits, number_number_processed_gates,
+           number_total_gates);
 
   const char *output_file_path = argv[2];
 #ifndef NDEBUG
@@ -36,7 +40,7 @@ int main(int argc, char *argv[]) {
     output_file << "\t" << x << std::endl;
   }
 
-  for (int qubit = 0; qubit < number_qubits; qubit++) {
+  for (unsigned int qubit = 0; qubit < number_qubits; qubit++) {
     measure(statevector, qubit, number_qubits);
   }
 
@@ -60,8 +64,10 @@ int main(int argc, char *argv[]) {
 }
 
 void simulate(std::vector<QASMGate> gates, std::vector<Complex> &statevector,
-              const int number_qubits) {
-  number_of_total_gates += gates.size();
+              const unsigned int number_qubits,
+              unsigned int &number_processed_gates,
+              unsigned int &number_total_gates, const bool print_progress) {
+  number_total_gates += gates.size();
   for (auto gate : gates) {
     auto gate_id = gate.gate;
     if (gate_id == GateID::CZ || gate_id == GateID::CX ||
@@ -131,7 +137,8 @@ void simulate(std::vector<QASMGate> gates, std::vector<Complex> &statevector,
         ccx_decomposition.emplace_back(QASMGate{0.0, gate.qubit_1_global_index,
                                                 gate.qubit_2_global_index, 0,
                                                 GateID::CX});
-        simulate(ccx_decomposition, statevector, number_qubits);
+        simulate(ccx_decomposition, statevector, number_qubits,
+                 number_processed_gates, number_total_gates, print_progress);
       }
     } else {
       // single unitary
@@ -139,27 +146,30 @@ void simulate(std::vector<QASMGate> gates, std::vector<Complex> &statevector,
       applyGate(unitary, gate.qubit_1_global_index, number_qubits, statevector);
     }
 
-    processed_gates++;
+    number_processed_gates++;
 
-    // print progress bar
-    constexpr unsigned int width = 50;
+    if (print_progress) {
+      // print progress bar
+      constexpr unsigned int width = 50;
 
-    const auto current = std::clamp(processed_gates, 0u, number_of_total_gates);
-    const int completed =
-        std::clamp((current * width) / number_of_total_gates, 0u, width);
+      const auto current =
+          std::clamp(number_processed_gates, 0u, number_total_gates);
+      const int completed =
+          std::clamp((current * width) / number_total_gates, 0u, width);
 
-    const int remaining = width - completed;
+      const int remaining = width - completed;
 
-    std::cout << '\r' << '['
-              << std::string(static_cast<std::size_t>(completed), '=')
-              << std::string(static_cast<std::size_t>(remaining), ' ') << "] "
-              << (current * 100 / number_of_total_gates) << "% (" << current
-              << '/' << number_of_total_gates << ')' << std::flush;
+      std::cout << '\r' << '['
+                << std::string(static_cast<std::size_t>(completed), '=')
+                << std::string(static_cast<std::size_t>(remaining), ' ') << "] "
+                << (current * 100 / number_total_gates) << "% (" << current
+                << '/' << number_total_gates << ')' << std::flush;
+    }
   }
 }
 
-void measure(std::vector<Complex> &statevector, int target_qubit,
-             const int number_qubits) {
+void measure(std::vector<Complex> &statevector, unsigned int target_qubit,
+             const unsigned int number_qubits) {
   double p_0 = 0.0;
 
   // apply |0><0| to all values in state vector that have
@@ -194,7 +204,8 @@ void measure(std::vector<Complex> &statevector, int target_qubit,
   }
 }
 
-void applyGate(const Matrix unitary, int target_qubit, const int number_qubits,
+void applyGate(const Matrix unitary, const unsigned int target_qubit,
+               const unsigned int number_qubits,
                std::vector<Complex> &statevector) {
 
   const unsigned int target_index = 1u << (target_qubit);
@@ -217,8 +228,9 @@ void applyGate(const Matrix unitary, int target_qubit, const int number_qubits,
   }
 }
 
-void applyControlledGate(const Matrix unitary, int control_qubit,
-                         int target_qubit, const int number_qubits,
+void applyControlledGate(const Matrix unitary, const unsigned int control_qubit,
+                         const unsigned int target_qubit,
+                         const unsigned int number_qubits,
                          std::vector<Complex> &statevector) {
   const unsigned int control_mask = 1u << (number_qubits - 1 - control_qubit);
   const unsigned int target_mask = 1u << (number_qubits - 1 - target_qubit);

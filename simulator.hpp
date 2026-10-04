@@ -6,8 +6,8 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
-#include <iostream>
 #include <fstream>
+#include <iostream>
 #include <iterator>
 #include <random>
 #include <stdexcept>
@@ -22,9 +22,6 @@ const Complex INV_SQRT_2{1.0 / sqrt((2.0)), 0};
 using Matrix = std::array<Complex, 4>;
 const Matrix UNITARY_ACTIVE = {ZERO, ZERO, ZERO, ONE};
 const Matrix UNITARY_INACTIVE = {ONE, ZERO, ZERO, ZERO};
-
-static unsigned int processed_gates = 0;
-static unsigned int number_of_total_gates = 0;
 
 static const Matrix getUnitary(GateID id, double rotation_degree) {
   switch (id) {
@@ -72,17 +69,21 @@ static const Matrix getUnitary(GateID id, double rotation_degree) {
   }
 }
 
-void applyGate(const Matrix unitary, int target_qubit, const int number_qubits,
+void applyGate(const Matrix unitary, const unsigned int target_qubit,
+               const unsigned int number_qubits,
                std::vector<Complex> &statevector);
 
-void applyControlledGate(const Matrix unitary, int control_qubit,
-                         int target_qubit, const int number_qubits,
+void applyControlledGate(const Matrix unitary, const unsigned int control_qubit,
+                         const unsigned int target_qubit,
+                         const unsigned int number_qubits,
                          std::vector<Complex> &statevector);
 
 void simulate(std::vector<QASMGate> gates, std::vector<Complex> &statevector,
-              const int number_qubits);
+              const unsigned int number_qubits, unsigned int &processed_gates,
+              unsigned int &number_total_gates,
+              const bool print_progress = true);
 
-void measure(std::vector<Complex> &statevector, int target_qubit,
-             const int number_qubits);
+void measure(std::vector<Complex> &statevector, const unsigned int target_qubit,
+             const unsigned int number_qubits);
 
 #endif
