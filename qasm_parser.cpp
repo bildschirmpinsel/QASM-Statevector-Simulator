@@ -2,11 +2,10 @@
 #include "types.hpp"
 #include <stdexcept>
 
- int parseQASM(const char *file,
-                                std::vector<Complex> &statevector,
-                                std::vector<QASMGate> &gates) {
-  std::unordered_map<std::string, int> registerToVector;
-  int number_qubits = 0;
+unsigned int parseQASM(const char *file, std::vector<Complex> &statevector,
+                       std::vector<QASMGate> &gates) {
+  std::unordered_map<std::string, unsigned int> registerToVector;
+  unsigned int number_qubits = 0;
 
 #ifndef NDEBUG
   std::cout << "Parsing file at path " << file << std::endl;
@@ -24,7 +23,7 @@
       continue;
     } else if (command == "qreg") {
       // new quantum register
-      int size = 0;
+      unsigned int size = 0;
       std::string definition;
       stream >> definition;
       auto register_name = parseRegisterDefinition(definition, size);
@@ -41,8 +40,7 @@
       std::string operand_string;
       stream >> operand_string;
 
-      gates.push_back(
-          parseGate(command, operand_string, registerToVector));
+      gates.push_back(parseGate(command, operand_string, registerToVector));
     }
   }
 
@@ -55,7 +53,8 @@
   return number_qubits;
 }
 
-std::string parseRegisterDefinition(std::string definition, int &size) {
+std::string parseRegisterDefinition(std::string definition,
+                                    unsigned int &size) {
   std::string register_name;
   size = 0;
   enum ParserState { NAME, SIZE };
@@ -189,7 +188,6 @@ double parseParameter(std::string parameter_string) {
   std::cout << "\t\tStart parsing parameter..." << std::endl;
 #endif
 
-  enum ParameterOperation { ADD, SUB, MUL, DIV, NONE };
   ParameterOperation parameter_operation = ParameterOperation::NONE;
   double parameter = 0.0;
   int decimal_place = 0;
@@ -224,32 +222,11 @@ double parseParameter(std::string parameter_string) {
       execute_operation();
       break;
     case '+':
-      if (parameter_operation == ParameterOperation::SUB) {
-        parameter_buffer *= -1.0;
-      }
-      // parsing of first operand done, clear buffer
-      parameter = parameter_buffer;
-      parameter_buffer = 0.0;
-      parameter_operation = ParameterOperation::ADD;
-      break;
+      [[fallthrough]];
     case '-':
-      if (parameter_operation == ParameterOperation::SUB) {
-        parameter_buffer *= -1.0;
-      }
-      // parsing of first operand done, clear buffer
-      parameter = parameter_buffer;
-      parameter_buffer = 0.0;
-      parameter_operation = ParameterOperation::SUB;
-      break;
+      [[fallthrough]];
     case '*':
-      if (parameter_operation == ParameterOperation::SUB) {
-        parameter_buffer *= -1.0;
-      }
-      // parsing of first operand done, clear buffer
-      parameter = parameter_buffer;
-      parameter_buffer = 0.0;
-      parameter_operation = ParameterOperation::MUL;
-      break;
+      [[fallthrough]];
     case '/':
       if (parameter_operation == ParameterOperation::SUB) {
         parameter_buffer *= -1.0;
@@ -257,7 +234,7 @@ double parseParameter(std::string parameter_string) {
       // parsing of first operand done, clear buffer
       parameter = parameter_buffer;
       parameter_buffer = 0.0;
-      parameter_operation = ParameterOperation::DIV;
+      parameter_operation = parameterOperationMap.at(c);
       break;
     case 'p':
       parameter_buffer = M_PI;
@@ -270,6 +247,8 @@ double parseParameter(std::string parameter_string) {
       break;
     default:
       if (c >= '0' && c <= '9') {
+        // convert char to number either before
+        // decimal place or after
         if (decimal_place == 0) {
           parameter_buffer = parameter_buffer * 10 + (c - '0');
         } else {
