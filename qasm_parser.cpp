@@ -53,7 +53,7 @@ unsigned int parseQASM(const char *file, std::vector<Complex> &statevector,
   return number_qubits;
 }
 
-std::string parseRegisterDefinition(std::string definition,
+std::string parseRegisterDefinition(const std::string definition,
                                     unsigned int &size) {
   std::string register_name;
   size = 0;
@@ -84,8 +84,9 @@ std::string parseRegisterDefinition(std::string definition,
       "Declaration of register does not terminate with \']\'!");
 }
 
-QASMGate parseGate(std::string gate_string, std::string operand_string,
-                   std::unordered_map<std::string, int> &registerToVector) {
+QASMGate
+parseGate(const std::string gate_string, const std::string operand_string,
+          std::unordered_map<std::string, unsigned int> &registerToVector) {
   auto gate_name = gate_string.substr(0, gate_string.find('('));
 #ifndef NDEBUG
   std::cout << "\tParsing gate " << gate_name << std::endl;
@@ -183,7 +184,7 @@ QASMGate parseGate(std::string gate_string, std::string operand_string,
 
  Gate names are ignored in the string as long as they do not contain a p.
 */
-double parseParameter(std::string parameter_string) {
+double parseParameter(const std::string parameter_string) {
 #ifndef NDEBUG
   std::cout << "\t\tStart parsing parameter..." << std::endl;
 #endif

@@ -46,7 +46,7 @@ unsigned int parseQASM(const char *file, std::vector<Complex> &statevector,
 
  @return A string containing the register name.
 */
-std::string parseRegisterDefinition(std::string definition, unsigned int &size);
+std::string parseRegisterDefinition(const std::string definition, unsigned int &size);
 
 /**
  Parses a given gate string into a QASMGate struct, extracting the type of gate,
@@ -59,7 +59,7 @@ std::string parseRegisterDefinition(std::string definition, unsigned int &size);
  @return The parsed gate as a QASMGate struct.
 */
 QASMGate
-parseGate(std::string gate_string, std::string operand_string,
+parseGate(const std::string gate_string, const std::string operand_string,
           std::unordered_map<std::string, unsigned int> &registerToVector);
 
 /**
@@ -71,6 +71,6 @@ parseGate(std::string gate_string, std::string operand_string,
 
  @return The parsed parameter.
  */
-double parseParameter(std::string parameter_string);
+double parseParameter(const std::string parameter_string);
 
 #endif
