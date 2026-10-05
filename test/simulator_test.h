@@ -11,6 +11,60 @@ private:
 
   const double EPSILON = 1e-12;
 
+  void testSingleQubitGate(const GateID gate,
+                           const std::vector<Complex> expected_result_ket_zero,
+                           const std::vector<Complex> expected_result_ket_one) {
+    const Matrix unitary = getUnitary(gate, 0.0);
+    applyGate(unitary, 0, 1, ket_zero);
+    applyGate(unitary, 0, 1, ket_one);
+
+    for (int i = 0; i < 2; i++)
+      TS_ASSERT_EQUALS(ket_zero[i], expected_result_ket_zero[i]);
+    for (int i = 0; i < 2; i++)
+      TS_ASSERT_EQUALS(ket_one[i], expected_result_ket_one[i]);
+  }
+
+  void testSingelQubitRotationGate(
+      const Matrix unitary, const std::vector<Complex> expected_result_ket_zero,
+      const std::vector<Complex> expected_result_ket_one) {
+    applyGate(unitary, 0, 1, ket_zero);
+    applyGate(unitary, 0, 1, ket_one);
+
+    for (int i = 0; i < 2; i++) {
+      TS_ASSERT_DELTA(ket_zero[i].real(), expected_result_ket_zero[i].real(),
+                      EPSILON);
+      TS_ASSERT_DELTA(ket_zero[i].imag(), expected_result_ket_zero[i].imag(),
+                      EPSILON);
+    }
+    for (int i = 0; i < 2; i++) {
+      TS_ASSERT_DELTA(ket_one[i].real(), expected_result_ket_one[i].real(),
+                      EPSILON);
+      TS_ASSERT_DELTA(ket_one[i].imag(), expected_result_ket_one[i].imag(),
+                      EPSILON);
+    }
+  }
+
+  void testConditionalGate(const GateID gate,
+                           const std::vector<Complex> expected_result_1,
+                           const std::vector<Complex> expected_result_2,
+                           std::vector<Complex> input_1,
+                           std::vector<Complex> input_2) {
+    const Matrix unitary = getUnitary(gate, 0.0);
+    const int target_qubit = 0;
+    const int control_qubit = 1;
+    const int number_qubits = 2;
+
+    applyControlledGate(unitary, control_qubit, target_qubit, number_qubits,
+                        input_1);
+    applyControlledGate(unitary, control_qubit, target_qubit, number_qubits,
+                        input_2);
+
+    for (int i = 0; i < 4; i++)
+      TS_ASSERT_EQUALS(input_1[i], expected_result_1[i]);
+    for (int i = 0; i < 4; i++)
+      TS_ASSERT_EQUALS(input_2[i], expected_result_2[i]);
+  }
+
 public:
   void setUp() {
     ket_zero.push_back(ONE);
@@ -29,45 +83,24 @@ public:
     const std::vector<Complex> expected_result_ket_zero{ZERO, ONE};
     const std::vector<Complex> expected_result_ket_one{ONE, ZERO};
 
-    const Matrix unitary = getUnitary(GateID::X, 0.0);
-
-    applyGate(unitary, 0, 1, ket_zero);
-    applyGate(unitary, 0, 1, ket_one);
-
-    for (int i = 0; i < 2; i++)
-      TS_ASSERT_EQUALS(ket_zero[i], expected_result_ket_zero[i]);
-    for (int i = 0; i < 2; i++)
-      TS_ASSERT_EQUALS(ket_one[i], expected_result_ket_one[i]);
+    testSingleQubitGate(GateID::X, expected_result_ket_zero,
+                        expected_result_ket_one);
   }
 
   void testGatePauliY() {
     const std::vector<Complex> expected_result_ket_zero{ZERO, I};
     const std::vector<Complex> expected_result_ket_one{-I, ZERO};
 
-    const Matrix unitary = getUnitary(GateID::Y, 0.0);
-
-    applyGate(unitary, 0, 1, ket_zero);
-    applyGate(unitary, 0, 1, ket_one);
-
-    for (int i = 0; i < 2; i++)
-      TS_ASSERT_EQUALS(ket_zero[i], expected_result_ket_zero[i]);
-    for (int i = 0; i < 2; i++)
-      TS_ASSERT_EQUALS(ket_one[i], expected_result_ket_one[i]);
+    testSingleQubitGate(GateID::Y, expected_result_ket_zero,
+                        expected_result_ket_one);
   }
 
   void testGatePauliZ() {
     const std::vector<Complex> expected_result_ket_zero{ONE, ZERO};
     const std::vector<Complex> expected_result_ket_one{ZERO, -ONE};
 
-    const Matrix unitary = getUnitary(GateID::Z, 0.0);
-
-    applyGate(unitary, 0, 1, ket_zero);
-    applyGate(unitary, 0, 1, ket_one);
-
-    for (int i = 0; i < 2; i++)
-      TS_ASSERT_EQUALS(ket_zero[i], expected_result_ket_zero[i]);
-    for (int i = 0; i < 2; i++)
-      TS_ASSERT_EQUALS(ket_one[i], expected_result_ket_one[i]);
+    testSingleQubitGate(GateID::Z, expected_result_ket_zero,
+                        expected_result_ket_one);
   }
 
   void testGateHadamard() {
@@ -75,30 +108,16 @@ public:
     const std::vector<Complex> expected_result_ket_one{INV_SQRT_2,
                                                        MINUS_ONE * INV_SQRT_2};
 
-    const Matrix unitary = getUnitary(GateID::H, 0.0);
-
-    applyGate(unitary, 0, 1, ket_zero);
-    applyGate(unitary, 0, 1, ket_one);
-
-    for (int i = 0; i < 2; i++)
-      TS_ASSERT_EQUALS(ket_zero[i], expected_result_ket_zero[i]);
-    for (int i = 0; i < 2; i++)
-      TS_ASSERT_EQUALS(ket_one[i], expected_result_ket_one[i]);
+    testSingleQubitGate(GateID::H, expected_result_ket_zero,
+                        expected_result_ket_one);
   }
 
   void testGateS() {
     const std::vector<Complex> expected_result_ket_zero{ONE, ZERO};
     const std::vector<Complex> expected_result_ket_one{ZERO, I};
 
-    const Matrix unitary = getUnitary(GateID::S, 0.0);
-
-    applyGate(unitary, 0, 1, ket_zero);
-    applyGate(unitary, 0, 1, ket_one);
-
-    for (int i = 0; i < 2; i++)
-      TS_ASSERT_EQUALS(ket_zero[i], expected_result_ket_zero[i]);
-    for (int i = 0; i < 2; i++)
-      TS_ASSERT_EQUALS(ket_one[i], expected_result_ket_one[i]);
+    testSingleQubitGate(GateID::S, expected_result_ket_zero,
+                        expected_result_ket_one);
   }
 
   void testGateT() {
@@ -106,15 +125,8 @@ public:
     const std::vector<Complex> expected_result_ket_one{
         ZERO, std::polar(1.0, M_PI / 4.0)};
 
-    const Matrix unitary = getUnitary(GateID::T, 0.0);
-
-    applyGate(unitary, 0, 1, ket_zero);
-    applyGate(unitary, 0, 1, ket_one);
-
-    for (int i = 0; i < 2; i++)
-      TS_ASSERT_EQUALS(ket_zero[i], expected_result_ket_zero[i]);
-    for (int i = 0; i < 2; i++)
-      TS_ASSERT_EQUALS(ket_one[i], expected_result_ket_one[i]);
+    testSingleQubitGate(GateID::T, expected_result_ket_zero,
+                        expected_result_ket_one);
   }
 
   void testGateAdjointT() {
@@ -122,60 +134,32 @@ public:
     const std::vector<Complex> expected_result_ket_one{
         ZERO, std::polar(1.0, -M_PI / 4.0)};
 
-    const Matrix unitary = getUnitary(GateID::AT, 0.0);
-
-    applyGate(unitary, 0, 1, ket_zero);
-    applyGate(unitary, 0, 1, ket_one);
-
-    for (int i = 0; i < 2; i++)
-      TS_ASSERT_EQUALS(ket_zero[i], expected_result_ket_zero[i]);
-    for (int i = 0; i < 2; i++)
-      TS_ASSERT_EQUALS(ket_one[i], expected_result_ket_one[i]);
+    testSingleQubitGate(GateID::AT, expected_result_ket_zero,
+                        expected_result_ket_one);
   }
 
   void testGateRotationXZeroAngle() {
     const std::vector<Complex> expected_result_ket_zero{ONE, ZERO};
     const std::vector<Complex> expected_result_ket_one{ZERO, ONE};
 
-    const Matrix unitary = getUnitary(GateID::RX, 0.0);
-
-    applyGate(unitary, 0, 1, ket_zero);
-    applyGate(unitary, 0, 1, ket_one);
-
-    for (int i = 0; i < 2; i++)
-      TS_ASSERT_EQUALS(ket_zero[i], expected_result_ket_zero[i]);
-    for (int i = 0; i < 2; i++)
-      TS_ASSERT_EQUALS(ket_one[i], expected_result_ket_one[i]);
+    testSingleQubitGate(GateID::RX, expected_result_ket_zero,
+                        expected_result_ket_one);
   }
 
   void testGateRotationYZeroAngle() {
     const std::vector<Complex> expected_result_ket_zero{ONE, ZERO};
     const std::vector<Complex> expected_result_ket_one{ZERO, ONE};
 
-    const Matrix unitary = getUnitary(GateID::RY, 0.0);
-
-    applyGate(unitary, 0, 1, ket_zero);
-    applyGate(unitary, 0, 1, ket_one);
-
-    for (int i = 0; i < 2; i++)
-      TS_ASSERT_EQUALS(ket_zero[i], expected_result_ket_zero[i]);
-    for (int i = 0; i < 2; i++)
-      TS_ASSERT_EQUALS(ket_one[i], expected_result_ket_one[i]);
+    testSingleQubitGate(GateID::RY, expected_result_ket_zero,
+                        expected_result_ket_one);
   }
 
   void testGateRotationZZeroAngle() {
     const std::vector<Complex> expected_result_ket_zero{ONE, ZERO};
     const std::vector<Complex> expected_result_ket_one{ZERO, ONE};
 
-    const Matrix unitary = getUnitary(GateID::RZ, 0.0);
-
-    applyGate(unitary, 0, 1, ket_zero);
-    applyGate(unitary, 0, 1, ket_one);
-
-    for (int i = 0; i < 2; i++)
-      TS_ASSERT_EQUALS(ket_zero[i], expected_result_ket_zero[i]);
-    for (int i = 0; i < 2; i++)
-      TS_ASSERT_EQUALS(ket_one[i], expected_result_ket_one[i]);
+    testSingleQubitGate(GateID::RZ, expected_result_ket_zero,
+                        expected_result_ket_one);
   }
 
   void testGateRotationXFullRotation() {
@@ -186,21 +170,8 @@ public:
 
     const Matrix unitary = getUnitary(GateID::RX, 2 * M_PI);
 
-    applyGate(unitary, 0, 1, ket_zero);
-    applyGate(unitary, 0, 1, ket_one);
-
-    for (int i = 0; i < 2; i++) {
-      TS_ASSERT_DELTA(ket_zero[i].real(), expected_result_ket_zero[i].real(),
-                      EPSILON);
-      TS_ASSERT_DELTA(ket_zero[i].imag(), expected_result_ket_zero[i].imag(),
-                      EPSILON);
-    }
-    for (int i = 0; i < 2; i++) {
-      TS_ASSERT_DELTA(ket_one[i].real(), expected_result_ket_one[i].real(),
-                      EPSILON);
-      TS_ASSERT_DELTA(ket_one[i].imag(), expected_result_ket_one[i].imag(),
-                      EPSILON);
-    }
+    testSingelQubitRotationGate(unitary, expected_result_ket_zero,
+                                expected_result_ket_one);
   }
 
   void testGateRotationYFullRotation() {
@@ -211,21 +182,8 @@ public:
 
     const Matrix unitary = getUnitary(GateID::RY, 2 * M_PI);
 
-    applyGate(unitary, 0, 1, ket_zero);
-    applyGate(unitary, 0, 1, ket_one);
-
-    for (int i = 0; i < 2; i++) {
-      TS_ASSERT_DELTA(ket_zero[i].real(), expected_result_ket_zero[i].real(),
-                      EPSILON);
-      TS_ASSERT_DELTA(ket_zero[i].imag(), expected_result_ket_zero[i].imag(),
-                      EPSILON);
-    }
-    for (int i = 0; i < 2; i++) {
-      TS_ASSERT_DELTA(ket_one[i].real(), expected_result_ket_one[i].real(),
-                      EPSILON);
-      TS_ASSERT_DELTA(ket_one[i].imag(), expected_result_ket_one[i].imag(),
-                      EPSILON);
-    }
+    testSingelQubitRotationGate(unitary, expected_result_ket_zero,
+                                expected_result_ket_one);
   }
 
   void testGateRotationZFullRotation() {
@@ -236,21 +194,8 @@ public:
 
     const Matrix unitary = getUnitary(GateID::RZ, 2 * M_PI);
 
-    applyGate(unitary, 0, 1, ket_zero);
-    applyGate(unitary, 0, 1, ket_one);
-
-    for (int i = 0; i < 2; i++) {
-      TS_ASSERT_DELTA(ket_zero[i].real(), expected_result_ket_zero[i].real(),
-                      EPSILON);
-      TS_ASSERT_DELTA(ket_zero[i].imag(), expected_result_ket_zero[i].imag(),
-                      EPSILON);
-    }
-    for (int i = 0; i < 2; i++) {
-      TS_ASSERT_DELTA(ket_one[i].real(), expected_result_ket_one[i].real(),
-                      EPSILON);
-      TS_ASSERT_DELTA(ket_one[i].imag(), expected_result_ket_one[i].imag(),
-                      EPSILON);
-    }
+    testSingelQubitRotationGate(unitary, expected_result_ket_zero,
+                                expected_result_ket_one);
   }
 
   void testGateRotationXQuarterRotation() {
@@ -261,21 +206,8 @@ public:
 
     const Matrix unitary = getUnitary(GateID::RX, 0.5 * M_PI);
 
-    applyGate(unitary, 0, 1, ket_zero);
-    applyGate(unitary, 0, 1, ket_one);
-
-    for (int i = 0; i < 2; i++) {
-      TS_ASSERT_DELTA(ket_zero[i].real(), expected_result_ket_zero[i].real(),
-                      EPSILON);
-      TS_ASSERT_DELTA(ket_zero[i].imag(), expected_result_ket_zero[i].imag(),
-                      EPSILON);
-    }
-    for (int i = 0; i < 2; i++) {
-      TS_ASSERT_DELTA(ket_one[i].real(), expected_result_ket_one[i].real(),
-                      EPSILON);
-      TS_ASSERT_DELTA(ket_one[i].imag(), expected_result_ket_one[i].imag(),
-                      EPSILON);
-    }
+    testSingelQubitRotationGate(unitary, expected_result_ket_zero,
+                                expected_result_ket_one);
   }
 
   void testGateRotationYQuarterRotation() {
@@ -284,21 +216,8 @@ public:
 
     const Matrix unitary = getUnitary(GateID::RY, 0.5 * M_PI);
 
-    applyGate(unitary, 0, 1, ket_zero);
-    applyGate(unitary, 0, 1, ket_one);
-
-    for (int i = 0; i < 2; i++) {
-      TS_ASSERT_DELTA(ket_zero[i].real(), expected_result_ket_zero[i].real(),
-                      EPSILON);
-      TS_ASSERT_DELTA(ket_zero[i].imag(), expected_result_ket_zero[i].imag(),
-                      EPSILON);
-    }
-    for (int i = 0; i < 2; i++) {
-      TS_ASSERT_DELTA(ket_one[i].real(), expected_result_ket_one[i].real(),
-                      EPSILON);
-      TS_ASSERT_DELTA(ket_one[i].imag(), expected_result_ket_one[i].imag(),
-                      EPSILON);
-    }
+    testSingelQubitRotationGate(unitary, expected_result_ket_zero,
+                                expected_result_ket_one);
   }
 
   void testGateRotationZQuarterRotation() {
@@ -309,21 +228,8 @@ public:
 
     const Matrix unitary = getUnitary(GateID::RZ, 0.5 * M_PI);
 
-    applyGate(unitary, 0, 1, ket_zero);
-    applyGate(unitary, 0, 1, ket_one);
-
-    for (int i = 0; i < 2; i++) {
-      TS_ASSERT_DELTA(ket_zero[i].real(), expected_result_ket_zero[i].real(),
-                      EPSILON);
-      TS_ASSERT_DELTA(ket_zero[i].imag(), expected_result_ket_zero[i].imag(),
-                      EPSILON);
-    }
-    for (int i = 0; i < 2; i++) {
-      TS_ASSERT_DELTA(ket_one[i].real(), expected_result_ket_one[i].real(),
-                      EPSILON);
-      TS_ASSERT_DELTA(ket_one[i].imag(), expected_result_ket_one[i].imag(),
-                      EPSILON);
-    }
+    testSingelQubitRotationGate(unitary, expected_result_ket_zero,
+                                expected_result_ket_one);
   }
 
   void testGateConditionalXInactive() {
@@ -333,21 +239,9 @@ public:
     std::vector<Complex> inactive_ket_00{ONE, ZERO, ZERO, ZERO};
     std::vector<Complex> inactive_ket_01{ZERO, ZERO, ONE, ZERO};
 
-    const Matrix unitary = getUnitary(GateID::X, 0.0);
-
-    const int target_qubit = 0;
-    const int control_qubit = 1;
-    const int number_qubits = 2;
-
-    applyControlledGate(unitary, control_qubit, target_qubit, number_qubits,
-                        inactive_ket_00);
-    applyControlledGate(unitary, control_qubit, target_qubit, number_qubits,
+    testConditionalGate(GateID::X, expected_result_ket_00,
+                        expected_result_ket_01, inactive_ket_00,
                         inactive_ket_01);
-
-    for (int i = 0; i < 4; i++)
-      TS_ASSERT_EQUALS(inactive_ket_00[i], expected_result_ket_00[i]);
-    for (int i = 0; i < 4; i++)
-      TS_ASSERT_EQUALS(inactive_ket_01[i], expected_result_ket_01[i]);
   }
 
   void testGateConditionalXActive() {
@@ -357,21 +251,8 @@ public:
     std::vector<Complex> active_ket_10{ZERO, ONE, ZERO, ZERO};
     std::vector<Complex> active_ket_11{ZERO, ZERO, ZERO, ONE};
 
-    const Matrix unitary = getUnitary(GateID::X, 0.0);
-
-    const int target_qubit = 0;
-    const int control_qubit = 1;
-    const int number_qubits = 2;
-
-    applyControlledGate(unitary, control_qubit, target_qubit, number_qubits,
-                        active_ket_10);
-    applyControlledGate(unitary, control_qubit, target_qubit, number_qubits,
-                        active_ket_11);
-
-    for (int i = 0; i < 4; i++)
-      TS_ASSERT_EQUALS(active_ket_10[i], expected_result_ket_10[i]);
-    for (int i = 0; i < 4; i++)
-      TS_ASSERT_EQUALS(active_ket_11[i], expected_result_ket_11[i]);
+    testConditionalGate(GateID::X, expected_result_ket_10,
+                        expected_result_ket_11, active_ket_10, active_ket_11);
   }
 
   void testGateConditionalZInactive() {
@@ -381,21 +262,9 @@ public:
     std::vector<Complex> inactive_ket_00{ONE, ZERO, ZERO, ZERO};
     std::vector<Complex> inactive_ket_01{ZERO, ZERO, ONE, ZERO};
 
-    const Matrix unitary = getUnitary(GateID::Z, 0.0);
-
-    const int target_qubit = 0;
-    const int control_qubit = 1;
-    const int number_qubits = 2;
-
-    applyControlledGate(unitary, control_qubit, target_qubit, number_qubits,
-                        inactive_ket_00);
-    applyControlledGate(unitary, control_qubit, target_qubit, number_qubits,
+    testConditionalGate(GateID::Z, expected_result_ket_00,
+                        expected_result_ket_01, inactive_ket_00,
                         inactive_ket_01);
-
-    for (int i = 0; i < 4; i++)
-      TS_ASSERT_EQUALS(inactive_ket_00[i], expected_result_ket_00[i]);
-    for (int i = 0; i < 4; i++)
-      TS_ASSERT_EQUALS(inactive_ket_01[i], expected_result_ket_01[i]);
   }
 
   void testGateConditionalZActive() {
@@ -405,21 +274,8 @@ public:
     std::vector<Complex> active_ket_10{ZERO, ONE, ZERO, ZERO};
     std::vector<Complex> active_ket_11{ZERO, ZERO, ZERO, ONE};
 
-    const Matrix unitary = getUnitary(GateID::Z, 0.0);
-
-    const int target_qubit = 0;
-    const int control_qubit = 1;
-    const int number_qubits = 2;
-
-    applyControlledGate(unitary, control_qubit, target_qubit, number_qubits,
-                        active_ket_10);
-    applyControlledGate(unitary, control_qubit, target_qubit, number_qubits,
-                        active_ket_11);
-
-    for (int i = 0; i < 4; i++)
-      TS_ASSERT_EQUALS(active_ket_10[i], expected_result_ket_10[i]);
-    for (int i = 0; i < 4; i++)
-      TS_ASSERT_EQUALS(active_ket_11[i], expected_result_ket_11[i]);
+    testConditionalGate(GateID::Z, expected_result_ket_10,
+                        expected_result_ket_11, active_ket_10, active_ket_11);
   }
 
   void testGateDoubleConditionalX() {}
