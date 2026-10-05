@@ -1,8 +1,5 @@
 #include "../src/simulator.hpp"
-#include <cmath>
 #include <cxxtest/TestSuite.h>
-#include <limits>
-#include <vector>
 
 class SimulatorTestSuite : public CxxTest::TestSuite {
 private:
