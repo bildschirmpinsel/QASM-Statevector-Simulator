@@ -1,7 +1,6 @@
 #ifndef SIMULATOR
 #define SIMULATOR
 
-#include "qasm_parser.hpp"
 #include "types.hpp"
 #include <algorithm>
 #include <array>
