@@ -1,6 +1,4 @@
 #include "qasm_parser.hpp"
-#include "types.hpp"
-#include <stdexcept>
 
 unsigned int parseQASM(const char *file, std::vector<Complex> &statevector,
                        std::vector<QASMGate> &gates) {

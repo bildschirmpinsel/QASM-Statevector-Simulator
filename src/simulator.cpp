@@ -1,5 +1,4 @@
 #include "simulator.hpp"
-#include "types.hpp"
 
 int main(int argc, char *argv[]) {
   if (argc < 3) {
