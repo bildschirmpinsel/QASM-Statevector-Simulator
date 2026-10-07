@@ -193,6 +193,10 @@ double parseParameter(const std::string parameter_string) {
   double parameter_buffer = 0.0;
 
   auto execute_operation = [&]() {
+#ifndef NDEBUG
+    std::cout << "\t\t\tParameter and buffer for operation execution: "
+              << parameter << ", " << parameter_buffer << std::endl;
+#endif
     switch (parameter_operation) {
     case ADD:
       parameter += parameter_buffer;
@@ -207,6 +211,7 @@ double parseParameter(const std::string parameter_string) {
       parameter /= parameter_buffer;
       break;
     case NONE:
+      parameter = parameter_buffer;
       break;
     }
     parameter_buffer = 0.0;
@@ -233,6 +238,7 @@ double parseParameter(const std::string parameter_string) {
       // parsing of first operand done, clear buffer
       parameter = parameter_buffer;
       parameter_buffer = 0.0;
+      decimal_place = 0;
       parameter_operation = parameterOperationMap.at(c);
       break;
     case 'p':
