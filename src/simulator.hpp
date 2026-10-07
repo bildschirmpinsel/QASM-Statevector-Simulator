@@ -11,6 +11,7 @@
 #include <random>
 #include <stdexcept>
 #include <vector>
+#include <cassert>
 
 constexpr Complex ZERO{0.0, 0.0};
 constexpr Complex ONE{1.0, 0.0};

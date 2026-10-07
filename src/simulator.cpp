@@ -85,6 +85,13 @@ void simulate(std::vector<QASMGate> gates, std::vector<Complex> &statevector,
 
     number_processed_gates++;
 
+    double norm = 0.0;
+    #pragma OMP PARALLEL FOR REDUCE(+:norm) 
+    for (auto z : statevector)
+      norm += std::norm(z);
+
+    assert(std::abs(norm - 1.0) < 0.01 && "Norm of statevector is not close to 1!");
+
     if (print_progress) {
       // print progress bar
       constexpr unsigned int width = 50;
